@@ -1,19 +1,12 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-
+import express from "express";
+import bodyParser from "body-parser";
+import fetch from "node-fetch";
 const app = express();
 const port = 3000;
 
-// Mock weather data (replace this with a real weather API call)
-const weatherData = {
-  toronto: "24C",
-  mumbai: "34C",
-  london: "14C",
-};
-
 app.use(bodyParser.json());
 
-app.post("/getWeather", (req, res) => {
+app.post("/getWeather", async (req, res) => {
   try {
     // Get the list of cities from the POST request body
     const { cities } = req.body;
@@ -25,11 +18,19 @@ app.post("/getWeather", (req, res) => {
 
     // Get weather information for each city
     const result = {};
-    cities.forEach((city) => {
-      // Check if the city is in the mock weather data
-      const lowercaseCity = city.toLowerCase();
-      result[city] = weatherData[lowercaseCity] || "City not found";
-    });
+
+    for (const city of cities) {
+      const url = `https://api.weatherapi.com/v1/current.json?key=bc242e95349642568fc124118240301&q=${city}&aqi=no`;
+      const response = await fetch(url);
+      const data = await response.json();
+      console.log(data);
+
+      if (data.error) {
+        result[city] = "City not found";
+      } else {
+        result[city] = data.current.temp_c + "C";
+      }
+    }
 
     res.json({ weather: result });
   } catch (error) {
